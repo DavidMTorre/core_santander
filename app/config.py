@@ -19,8 +19,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    # Servidor.
+    # Servidor. En producción (Koyeb) el puerto lo asigna la plataforma vía $PORT;
+    # en local se usa 8003 como fallback.
     PORT: int = 8003
+
+    # CORS: lista de orígenes permitidos separados por comas. Default = dev (Vite).
+    # En producción agregar aquí la URL del frontend (p. ej. el dominio de Vercel).
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # Asesor por defecto cuando el cliente origina una solicitud y aún no tiene
     # asesor asignado (asesor_id es NOT NULL en solicitudes_credito). Debe ser el
@@ -32,6 +37,11 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        """Convierte ALLOWED_ORIGINS (CSV) en lista, ignorando espacios/vacíos."""
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
 
 @lru_cache

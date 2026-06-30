@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_settings
 from app.routes import (
     rtr_auth,
     rtr_buro,
@@ -20,14 +21,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS abierto para desarrollo (App Clientes / Fuerza de Ventas + frontend React).
+# CORS configurable por entorno (ALLOWED_ORIGINS). Default = dev (Vite). En
+# producción se agregan los dominios reales sin tocar código.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # frontend React (Vite)
-        "http://127.0.0.1:5173",
-        "*",  # abierto en desarrollo; restringir en producción
-    ],
+    allow_origins=get_settings().allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
