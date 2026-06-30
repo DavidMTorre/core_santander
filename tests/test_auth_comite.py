@@ -103,3 +103,27 @@ def test_get_current_comite_rechaza_token_de_cliente():
     with pytest.raises(HTTPException) as exc:
         deps.get_current_comite(_creds(token))
     assert exc.value.status_code == 403
+
+
+def test_cliente_o_comite_acepta_comite():
+    token = crear_access_token(
+        {"sub": "C", "asesor_id": "a1", "perfil": "administrador", "codigo_empleado": "C"}
+    )
+    auth = deps.get_current_cliente_o_comite(_creds(token))
+    assert auth["es_comite"] is True
+    assert auth["cliente_id"] is None
+
+
+def test_cliente_o_comite_acepta_cliente():
+    token = crear_access_token({"sub": "user1", "cliente_id": "cli-1"})
+    auth = deps.get_current_cliente_o_comite(_creds(token))
+    assert auth["es_comite"] is False
+    assert auth["cliente_id"] == "cli-1"
+
+
+def test_cliente_o_comite_rechaza_token_vacio():
+    # Token sin perfil ni cliente_id -> 401.
+    token = crear_access_token({"sub": "x"})
+    with pytest.raises(HTTPException) as exc:
+        deps.get_current_cliente_o_comite(_creds(token))
+    assert exc.value.status_code == 401

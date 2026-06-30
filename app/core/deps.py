@@ -77,3 +77,34 @@ def get_current_comite(
         "perfil": perfil,
         "codigo_empleado": payload.get("codigo_empleado"),
     }
+
+
+def get_current_cliente_o_comite(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+) -> dict:
+    """Acepta token de cliente (dueño) O token de comité (supervisor/administrador).
+
+    Returns:
+        dict con:
+          - ``es_comite`` (bool): True si el token es de comité.
+          - ``cliente_id`` (str | None): id del cliente si el token es de cliente; None si comité.
+          - ``perfil`` (str | None): perfil si es comité.
+
+    El control de ownership (cliente == dueño del recurso) lo aplica cada ruta:
+    el comité puede ver cualquier recurso; el cliente solo el suyo.
+    """
+    payload = _decodificar_o_401(credentials.credentials)
+
+    perfil = payload.get("perfil")
+    if perfil in PERFILES_COMITE:
+        return {"es_comite": True, "cliente_id": None, "perfil": perfil}
+
+    cliente_id = payload.get("cliente_id")
+    if cliente_id:
+        return {"es_comite": False, "cliente_id": str(cliente_id), "perfil": None}
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token sin credenciales válidas",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
